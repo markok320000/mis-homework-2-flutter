@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "587487646182",
+    "project_id": "event-scheduler-40ebc",
+    "storage_bucket": "event-scheduler-40ebc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587487646182:android:50393e3ea5e729f3444627",
+        "android_client_info": {
+          "package_name": "com.example.event_scheduler_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCphQWEo6c7zfKxgzjYcO5LE_SSPaSGErE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
