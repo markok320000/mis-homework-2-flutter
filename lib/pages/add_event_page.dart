@@ -134,7 +134,7 @@ class _AddEventPageState extends State<AddEventPage> {
             SizedBox(height: 25),
             ElevatedButton(
               onPressed: () {
-                addEvent(userProvider.getUser.uid);
+                addEvent(userProvider.user.username);
               },
               child: Text("Add Event"),
             ),

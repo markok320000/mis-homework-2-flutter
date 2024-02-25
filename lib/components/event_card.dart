@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:event_scheduler_project/models/dogReportModel.dart';
 import 'package:event_scheduler_project/models/eventMode.dart';
 import 'package:event_scheduler_project/pages/event_page.dart';
 import 'package:event_scheduler_project/providers/user_provider.dart';
+import 'package:event_scheduler_project/resources/api/api_methods.dart';
 import 'package:event_scheduler_project/resources/firestore_methods.dart';
 import 'package:event_scheduler_project/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -12,13 +15,35 @@ String formatDate(DateTime date) {
   return DateFormat('yyyy-MM-dd').format(date);
 }
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   final DogReport dogReport;
-
+  bool? isInMyReports;
   EventCard({
     Key? key,
     required this.dogReport,
-  }) : super(key: key) {}
+    bool? isInMyReports,
+  })  : isInMyReports = isInMyReports ?? false,
+        super(key: key);
+
+  @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  Uint8List? imageFile;
+
+  @override
+  void initState() {
+    getImage();
+    super.initState();
+  }
+
+  void getImage() async {
+    Uint8List image = await ApiMethods().fetchImage(widget.dogReport.imgUrl);
+    setState(() {
+      imageFile = image;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +53,7 @@ class EventCard extends StatelessWidget {
           context,
           MaterialPageRoute(
               builder: (context) => EventPage(
-                    dogReportId: dogReport.id,
+                    dogReportId: widget.dogReport.id,
                   )),
         );
       },
@@ -39,19 +64,19 @@ class EventCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               image: DecorationImage(
-                image: NetworkImage(
-                  dogReport.imgUrl,
-                ), // replace with your image url
                 fit: BoxFit.cover,
+                image: imageFile != null
+                    ? MemoryImage(imageFile!)
+                    : AssetImage('assets/images/dogFound.png') as ImageProvider,
               ),
             ),
             child: BottomWidgetPart(
-              dogReport: dogReport,
+              dogReport: widget.dogReport,
             ),
           ),
           TopWidgetPart(
-            dogReport: dogReport,
-            isInFavourites: false,
+            dogReport: widget.dogReport,
+            isInMyReports: widget.isInMyReports,
           ),
         ],
       ),
@@ -61,11 +86,11 @@ class EventCard extends StatelessWidget {
 
 class TopWidgetPart extends StatelessWidget {
   final DogReport dogReport;
-  final bool? isInFavourites;
+  final bool? isInMyReports;
 
   const TopWidgetPart({
     super.key,
-    this.isInFavourites,
+    this.isInMyReports,
     required this.dogReport,
   });
 
@@ -81,7 +106,7 @@ class TopWidgetPart extends StatelessWidget {
             eventDate: dogReport.dateTime,
           ),
           _ButtonPartContainer(
-            isInFavourites: isInFavourites,
+            isInMyReports: isInMyReports,
             dogReport: dogReport,
           ),
         ],
@@ -91,12 +116,12 @@ class TopWidgetPart extends StatelessWidget {
 }
 
 class _ButtonPartContainer extends StatelessWidget {
-  final bool? isInFavourites;
+  final bool? isInMyReports;
   final DogReport dogReport;
 
   const _ButtonPartContainer({
     super.key,
-    this.isInFavourites,
+    this.isInMyReports,
     required this.dogReport,
   });
 
@@ -106,24 +131,17 @@ class _ButtonPartContainer extends StatelessWidget {
 
     return Align(
       alignment: Alignment.topRight,
-      child: ElevatedButton(
-        onPressed: () {
-          // isInFavourites!
-          //     ? removeFromFavourites(event.eventId, event.userId, context)
-          //     : addToFavourites(event.eventId, event.userId, context);
-        },
-        child: isInFavourites!
-            ? Icon(Icons.remove)
-            : Icon(Icons.add), // replace with your icon
-        style: ElevatedButton.styleFrom(
-          shape: CircleBorder(),
-          padding: EdgeInsets.all(10),
-
-          backgroundColor: isInFavourites!
-              ? Colors.red
-              : Colors.green, // replace with your desired color
-        ),
-      ),
+      child: isInMyReports!
+          ? ElevatedButton(
+              onPressed: () {},
+              child: Icon(Icons.remove),
+              style: ElevatedButton.styleFrom(
+                shape: CircleBorder(),
+                padding: EdgeInsets.all(10),
+                backgroundColor: Colors.red,
+              ),
+            )
+          : Container(), // Empty Container (invisible) when isInMyReports is false
     );
   }
 

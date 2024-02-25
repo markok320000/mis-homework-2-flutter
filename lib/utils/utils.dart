@@ -26,39 +26,39 @@ showSnackBar(BuildContext context, String text) {
   );
 }
 
-notifyNearByEvent(Position currentLocation, List<Event> eventsNotified) async {
-  User user = await AuthMethods().getUserDetails();
+// notifyNearByEvent(Position currentLocation, List<Event> eventsNotified) async {
+//   User user = await AuthMethods().getUserDetails();
 
-  if (user.uid == "") {
-    return;
-  }
+//   if (user.uid == "") {
+//     return;
+//   }
 
-  Stream<List<Event>> eventStream =
-      FireStoreMethods().getFavouriteEvents(user.uid);
+//   Stream<List<Event>> eventStream =
+//       FireStoreMethods().getFavouriteEvents(user.uid);
 
-  eventStream.listen((List<Event> eventList) {
-    for (var event in eventList) {
-      // Process each event
-      double distanceInMeters = Geolocator.distanceBetween(
-          event.location.latitude,
-          event.location.longitude,
-          currentLocation.latitude,
-          currentLocation.longitude);
+//   eventStream.listen((List<Event> eventList) {
+//     for (var event in eventList) {
+//       // Process each event
+//       double distanceInMeters = Geolocator.distanceBetween(
+//           event.location.latitude,
+//           event.location.longitude,
+//           currentLocation.latitude,
+//           currentLocation.longitude);
 
-      if (distanceInMeters < 1000) {
-        print("najden even");
-        if (eventsNotified.any((eve) => event.eventId == eve.eventId)) {
-          return;
-        }
-        AwesomeNotifications().createNotification(
-          content: NotificationContent(
-              id: 1,
-              channelKey: "channel_events",
-              title: "You have an event nearby",
-              body: "Check the events map, there is an event nearby"),
-        );
-        eventsNotified.add(event);
-      }
-    }
-  });
-}
+//       if (distanceInMeters < 1000) {
+//         print("najden even");
+//         if (eventsNotified.any((eve) => event.eventId == eve.eventId)) {
+//           return;
+//         }
+//         AwesomeNotifications().createNotification(
+//           content: NotificationContent(
+//               id: 1,
+//               channelKey: "channel_events",
+//               title: "You have an event nearby",
+//               body: "Check the events map, there is an event nearby"),
+//         );
+//         eventsNotified.add(event);
+//       }
+//     }
+//   });
+// }

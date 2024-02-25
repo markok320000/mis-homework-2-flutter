@@ -30,40 +30,40 @@ class _SignupPageState extends State<SignupPage> {
     _usernameController.dispose();
   }
 
-  void signUpUser() async {
-    // set loading to true
-    setState(() {
-      _isLoading = true;
-    });
+  // void signUpUser() async {
+  //   // set loading to true
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    // signup user using our authmethodds
-    String res = await AuthMethods().signUpUser(
-      email: _emailController.text,
-      password: _passwordController.text,
-    );
-    // if string returned is sucess, user has been created
-    if (res == "success") {
-      setState(() {
-        _isLoading = false;
-      });
-      // navigate to the home screen
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const MainPage(),
-          ),
-        );
-      }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      // show the error
-      if (context.mounted) {
-        showSnackBar(context, res);
-      }
-    }
-  }
+  //   // signup user using our authmethodds
+  //   String res = await AuthMethods().signUpUser(
+  //     email: _emailController.text,
+  //     password: _passwordController.text,
+  //   );
+  //   // if string returned is sucess, user has been created
+  //   if (res == "success") {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //     // navigate to the home screen
+  //     if (context.mounted) {
+  //       Navigator.of(context).pushReplacement(
+  //         MaterialPageRoute(
+  //           builder: (context) => const MainPage(),
+  //         ),
+  //       );
+  //     }
+  //   } else {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //     // show the error
+  //     if (context.mounted) {
+  //       showSnackBar(context, res);
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +110,7 @@ class _SignupPageState extends State<SignupPage> {
                 height: 24,
               ),
               InkWell(
-                onTap: () => signUpUser(),
+                onTap: () => {},
                 child: Container(
                   width: double.infinity,
                   alignment: Alignment.center,

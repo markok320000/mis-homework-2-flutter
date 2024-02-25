@@ -1,7 +1,10 @@
+import 'package:event_scheduler_project/models/user.dart';
 import 'package:event_scheduler_project/pages/main_page.dart';
 import 'package:event_scheduler_project/pages/signup_page.dart';
+import 'package:event_scheduler_project/providers/user_provider.dart';
 import 'package:event_scheduler_project/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../components/text_field_input.dart';
 import '../resources/auth_methods.dart';
@@ -18,13 +21,21 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  void loginUser() async {
-    print("se vika");
+  void loginUser(context) async {
     setState(() {
       _isLoading = true;
     });
-    String res = await AuthMethods().loginUser(
-        email: _emailController.text, password: _passwordController.text);
+    String res = '';
+    try {
+      User user = await AuthMethods().loginUser(
+          email: _emailController.text, password: _passwordController.text);
+
+      Provider.of<UserProvider>(context, listen: false).setUser(user);
+      res = 'success';
+    } catch (e) {
+      print(e);
+    }
+
     if (res == 'success') {
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -81,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                 height: 24,
               ),
               InkWell(
-                onTap: () => loginUser(),
+                onTap: () => loginUser(context),
                 child: Container(
                   width: double.infinity,
                   alignment: Alignment.center,

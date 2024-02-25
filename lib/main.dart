@@ -42,8 +42,8 @@ void main() async {
       desiredAccuracy: LocationAccuracy.high);
 
   const thirtySec = const Duration(seconds: 30);
-  new Timer.periodic(
-      thirtySec, (Timer t) => notifyNearByEvent(position, eventsNotified));
+  // new Timer.periodic(
+  //     thirtySec, (Timer t) => notifyNearByEvent(position, eventsNotified));
 
   bool isAllowedToSendNotifications =
       await AwesomeNotifications().isNotificationAllowed();
@@ -55,9 +55,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -69,34 +68,19 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
-            fontFamily: 'Urbanist',
-            scaffoldBackgroundColor: AppColors.background,
-            brightness: Brightness.dark),
-        // initialRoute: AppRoutes.main,
-        // routes: AppRoutes.pages,
-        home: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.active) {
-              // Checking if the snapshot has any data or not
-              if (snapshot.hasData) {
-                // if snapshot has data which means user is logged in then we check the width of screen and accordingly display the screen layout
-                return const MainPage();
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text('${snapshot.error}'),
-                );
-              }
+          fontFamily: 'Urbanist',
+          scaffoldBackgroundColor: AppColors.background,
+          brightness: Brightness.dark,
+        ),
+        home: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            if (userProvider.isLogged != false) {
+              // User is logged in, navigate to MainPage
+              return const MainPage();
+            } else {
+              // User is not logged in, show LoginPage
+              return const LoginPage();
             }
-
-            // means connection to future hasnt been made yet
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-
-            return const LoginPage();
           },
         ),
       ),

@@ -55,12 +55,6 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    addData();
-  }
-
-  addData() async {
-    UserProvider userProvider = Provider.of(context, listen: false);
-    await userProvider.refreshUser();
   }
 
   @override

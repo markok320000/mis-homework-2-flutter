@@ -2,11 +2,14 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:event_scheduler_project/models/chat.dart';
 import 'package:event_scheduler_project/models/dogReportModel.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 class ApiMethods {
+  String userId = "jhon";
+
   Future<List<DogReport>> fetchDogReports() async {
     Dio dio = Dio();
     final response = await dio.get('http://192.168.0.11:8080/api/dog-reports');
@@ -42,7 +45,7 @@ class ApiMethods {
     DogReport dogReport = DogReport(
         id: dogReportid,
         isLost: true,
-        userId: "jhony",
+        userId: "jhon",
         title: title,
         description: description,
         imgUrl: imgUrl,
@@ -91,6 +94,44 @@ class ApiMethods {
       }
     } catch (e) {
       return "Failed to upload image";
+    }
+  }
+
+  Future<Uint8List> fetchImage(String imgUrl) async {
+    Dio dio = Dio();
+    final response = await dio.get(
+      'http://192.168.0.11:8080/api/images/$imgUrl',
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to load image');
+    }
+  }
+
+  Future<DogReport> getMyDogReports(String userId) async {
+    Dio dio = Dio();
+    final response = await dio
+        .get('http://192.168.0.11:8080/api/dog-reports/myReports/$userId');
+
+    if (response.statusCode == 200) {
+      return DogReport.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load dog reports');
+    }
+  }
+
+  Future<ChatDTO> fetchChatById(String id) async {
+    Dio dio = Dio();
+    final response = await dio.get('http://192.168.0.11:8080/api/chat/$id');
+
+    if (response.statusCode == 200) {
+      print(response.data);
+      return ChatDTO.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load chat');
     }
   }
 }

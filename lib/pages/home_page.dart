@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> {
               sliver: SliverGrid.count(
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                crossAxisCount: 1,
+                crossAxisCount: 2,
                 children: <Widget>[
                   ...dogReports.map((report) {
                     return EventCard(
