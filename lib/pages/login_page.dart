@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                 height: 64,
               ),
               TextFieldInput(
-                hintText: 'Enter your email',
+                hintText: 'Enter your username',
                 textInputType: TextInputType.emailAddress,
                 textEditingController: _emailController,
               ),

@@ -54,41 +54,46 @@ class _ChatCardState extends State<ChatCard> {
                   )),
         );
       },
-      child: Container(
-        padding: EdgeInsets.only(left: 15, right: 15, top: 20, bottom: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(
-                      "https://www.w3schools.com/howto/img_avatar.png"),
-                ),
-                SizedBox(
-                  width: 15,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (chatterName != null)
-                      Text(
-                        chatterName!,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      )
-                    else
-                      CircularProgressIndicator(), // Display loading indicator if chatterName is null
-                    Text(chatterName ??
-                        "Loading..."), // Display "Loading..." if chatterName is null
-                  ],
-                ),
-              ],
+      child: chatterName == null
+          ? CircularProgressIndicator()
+          : Container(
+              padding:
+                  EdgeInsets.only(left: 15, right: 15, top: 20, bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundImage: NetworkImage(
+                            "https://www.w3schools.com/howto/img_avatar.png"),
+                      ),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (chatterName != null)
+                            Text(
+                              chatterName!,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            )
+                          else
+                            CircularProgressIndicator(), // Display loading indicator if chatterName is null
+                          Text(
+                            chat!.messages.length > 0
+                                ? chat!.messages.last.messageText
+                                : "No messages yet",
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            Text("08:40"),
-          ],
-        ),
-      ),
     );
   }
 }

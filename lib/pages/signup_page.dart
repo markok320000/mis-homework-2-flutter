@@ -1,7 +1,10 @@
 import 'dart:typed_data';
+import 'package:event_scheduler_project/models/user.dart';
 import 'package:event_scheduler_project/pages/login_page.dart';
 import 'package:event_scheduler_project/pages/main_page.dart';
+import 'package:event_scheduler_project/providers/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../components/text_field_input.dart';
 import '../resources/auth_methods.dart';
@@ -16,54 +19,54 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
   bool _isLoading = false;
   Uint8List? _image;
+  late UserProvider _userProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _userProvider = Provider.of<UserProvider>(context, listen: false);
+  }
 
   @override
   void dispose() {
     super.dispose();
-    _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
   }
 
-  // void signUpUser() async {
-  //   // set loading to true
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
+  void signUp() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  //   // signup user using our authmethodds
-  //   String res = await AuthMethods().signUpUser(
-  //     email: _emailController.text,
-  //     password: _passwordController.text,
-  //   );
-  //   // if string returned is sucess, user has been created
-  //   if (res == "success") {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     // navigate to the home screen
-  //     if (context.mounted) {
-  //       Navigator.of(context).pushReplacement(
-  //         MaterialPageRoute(
-  //           builder: (context) => const MainPage(),
-  //         ),
-  //       );
-  //     }
-  //   } else {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     // show the error
-  //     if (context.mounted) {
-  //       showSnackBar(context, res);
-  //     }
-  //   }
-  // }
+    User user = await AuthMethods().signUp(
+      name: _nameController.text,
+      password: _passwordController.text,
+      username: _usernameController.text,
+      surname: _surnameController.text,
+    );
+
+    if (user != null) {
+      _userProvider.setUser(user);
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false);
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      showSnackBar(context, 'Sign up failed');
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,9 +93,25 @@ class _SignupPageState extends State<SignupPage> {
                 height: 24,
               ),
               TextFieldInput(
-                hintText: 'Enter your email',
-                textInputType: TextInputType.emailAddress,
-                textEditingController: _emailController,
+                hintText: 'Enter your name',
+                textInputType: TextInputType.name,
+                textEditingController: _nameController,
+              ),
+              const SizedBox(
+                height: 24,
+              ),
+              TextFieldInput(
+                hintText: 'Enter your surname',
+                textInputType: TextInputType.name,
+                textEditingController: _surnameController,
+              ),
+              const SizedBox(
+                height: 24,
+              ),
+              TextFieldInput(
+                hintText: 'Enter your username',
+                textInputType: TextInputType.name,
+                textEditingController: _usernameController,
               ),
               const SizedBox(
                 height: 24,
@@ -110,7 +129,7 @@ class _SignupPageState extends State<SignupPage> {
                 height: 24,
               ),
               InkWell(
-                onTap: () => {},
+                onTap: () => {signUp()},
                 child: Container(
                   width: double.infinity,
                   alignment: Alignment.center,

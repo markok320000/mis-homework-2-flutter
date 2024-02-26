@@ -50,6 +50,39 @@ class AuthMethods {
   //   }
   //   return res;
   // }
+  Future<User> signUp({
+    required String password,
+    required String username,
+    required String name,
+    required String surname,
+  }) async {
+    try {
+      if (name.isNotEmpty && password.isNotEmpty && username.isNotEmpty) {
+        Dio dio = Dio();
+        final response = await dio.post(
+          'http://192.168.0.11:8080/api/user/register',
+          data: {
+            'username': username,
+            'password': password,
+            'name': name,
+            'surname': surname,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          print(response.data);
+          User user = User.fromJson(response.data);
+          return user;
+        } else {
+          throw Exception("Signup failed");
+        }
+      } else {
+        throw Exception("Email, password, and username cannot be empty");
+      }
+    } catch (error) {
+      throw Exception("Error occurred during signup: $error");
+    }
+  }
 
   // logging in user
   Future<User> loginUser({

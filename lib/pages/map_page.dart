@@ -2,7 +2,13 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:event_scheduler_project/components/chat_card.dart';
+import 'package:event_scheduler_project/models/chat.dart';
+import 'package:event_scheduler_project/models/dogReportModel.dart';
 import 'package:event_scheduler_project/models/eventMode.dart';
+import 'package:event_scheduler_project/pages/ChatPage.dart';
+import 'package:event_scheduler_project/providers/user_provider.dart';
+import 'package:event_scheduler_project/resources/api/api_methods.dart';
 import 'package:event_scheduler_project/resources/firestore_methods.dart';
 import 'package:event_scheduler_project/styles/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -25,21 +32,30 @@ class _MapPageState extends State<MapPage> {
 
   bool isVisibleTopPopUp = false;
 
-  Event? selectedEvent;
+  DogReport? selectedDogReport;
 
-  Uint8List? currentLocationIcon;
+  Uint8List? foundDogIcon;
+  Uint8List? lostDogIcon;
 
-  List<Event> events = [];
+  List<DogReport> dogReports = [];
   List<LatLng> polylineCoordinates = [];
+
+  String lostDogIconPath = "lib/assets/images/lostDog.png";
+  String foundDogIconPath = "lib/assets/images/foundDog.png";
 
   bool lostDogsSwitched = true;
 
   @override
   void initState() {
-    getBytesFromAsset("lib/assets/images/foundDog.png", 70);
-    getEvents();
+    setIcons();
+    getDogReports();
     getCurrentLocation();
     super.initState();
+  }
+
+  void setIcons() {
+    getBytesFromAsset(lostDogIconPath, 70);
+    getBytesFromAsset(foundDogIconPath, 70);
   }
 
   void getBytesFromAsset(String path, int width) async {
@@ -51,15 +67,18 @@ class _MapPageState extends State<MapPage> {
         .buffer
         .asUint8List();
     setState(() {
-      currentLocationIcon = img;
+      if (path == lostDogIconPath) {
+        lostDogIcon = img;
+      } else {
+        foundDogIcon = img;
+      }
     });
   }
 
-  Future<void> getEvents() async {
-    List<Event> fetchedEvents = await FireStoreMethods().getEvents();
-    print(fetchedEvents);
+  Future<void> getDogReports() async {
+    List<DogReport> fetchedReports = await ApiMethods().fetchDogReports();
     setState(() {
-      this.events = fetchedEvents;
+      this.dogReports = fetchedReports;
     });
   }
 
@@ -97,21 +116,21 @@ class _MapPageState extends State<MapPage> {
       appBar: AppBar(
         title: Text("MapPage"),
         actions: <Widget>[
-          DropdownButton<String>(
-            value: lostDogsSwitched ? 'Lost' : 'Found',
-            items: <String>['Lost', 'Found']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (value) => {
-              setState(() {
-                lostDogsSwitched = !lostDogsSwitched;
-              })
-            },
-          ),
+          // DropdownButton<String>(
+          //   value: lostDogsSwitched ? 'Lost' : 'Found',
+          //   items: <String>['Lost', 'Found']
+          //       .map<DropdownMenuItem<String>>((String value) {
+          //     return DropdownMenuItem<String>(
+          //       value: value,
+          //       child: Text(value),
+          //     );
+          //   }).toList(),
+          //   onChanged: (value) => {
+          //     setState(() {
+          //       lostDogsSwitched = !lostDogsSwitched;
+          //     })
+          //   },
+          // ),
         ],
       ),
       body: Container(
@@ -143,32 +162,32 @@ class _MapPageState extends State<MapPage> {
                             markerId: MarkerId("Source"),
                             position: currentLocation,
                           ),
-                          ...events.map((event) {
+                          ...dogReports.map((report) {
                             return Marker(
-                                markerId: MarkerId(event.title),
-                                position: event.geoLocationToLatLng(),
-                                icon: BitmapDescriptor.fromBytes(
-                                    currentLocationIcon!),
-                                onTap: () {
-                                  setState(() {
-                                    isVisibleTopPopUp = true;
-                                    selectedEvent = event;
-                                  });
+                              markerId: MarkerId(report.title),
+                              position: report.getLatLng(),
+                              icon: BitmapDescriptor.fromBytes(lostDogIcon!),
+                              onTap: () {
+                                setState(() {
+                                  isVisibleTopPopUp = true;
+                                  selectedDogReport = report;
                                 });
+                              },
+                            );
                           })
                         },
                         zoomControlsEnabled: false,
                       ),
                     ),
-                    selectedEvent != null && isVisibleTopPopUp
+                    selectedDogReport != null && isVisibleTopPopUp
                         ? GoToEventTopPopUp(
-                            event: selectedEvent!,
+                            event: selectedDogReport!,
                             onButtonPressed: () async {
                               await getPolyPoints(
                                 PointLatLng(currentLocation.latitude,
                                     currentLocation.longitude),
-                                PointLatLng(selectedEvent!.location.latitude,
-                                    selectedEvent!.location.longitude),
+                                PointLatLng(selectedDogReport!.latitude,
+                                    selectedDogReport!.longitude),
                               );
                             },
                           )
@@ -179,8 +198,8 @@ class _MapPageState extends State<MapPage> {
   }
 }
 
-class GoToEventTopPopUp extends StatelessWidget {
-  final Event event;
+class GoToEventTopPopUp extends StatefulWidget {
+  final DogReport event;
   final Future<void> Function() onButtonPressed;
 
   const GoToEventTopPopUp({
@@ -188,6 +207,46 @@ class GoToEventTopPopUp extends StatelessWidget {
     required this.event,
     required this.onButtonPressed,
   });
+
+  @override
+  State<GoToEventTopPopUp> createState() => _GoToEventTopPopUpState();
+}
+
+class _GoToEventTopPopUpState extends State<GoToEventTopPopUp> {
+  Uint8List? imageFile;
+  late UserProvider _userProvider;
+  @override
+  void initState() {
+    getImage();
+    _userProvider = Provider.of<UserProvider>(context, listen: false);
+    super.initState();
+  }
+
+  void getImage() async {
+    Uint8List image = await ApiMethods().fetchImage(widget.event.imgUrl);
+    setState(() {
+      imageFile = image;
+    });
+  }
+
+  void openChat() async {
+    ChatDTO openChat = await ApiMethods()
+        .createChat(_userProvider.user.username, widget.event.userId);
+
+    if (!_userProvider.user.chats.contains(openChat.id)) {
+      _userProvider.user.chats.add(openChat.id);
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatPage(
+          chat: openChat,
+          // Pass any other required parameters to ChatCard
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,18 +275,27 @@ class GoToEventTopPopUp extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(
-                        event.photoUrl), // Replace with your image URL
-                    radius:
-                        40, // Adjust the size of the CircleAvatar by changing the radius
+                  Container(
+                    width:
+                        80, // Adjust the size of the Container by changing the width and height
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: imageFile != null
+                            ? MemoryImage(imageFile!)
+                            : AssetImage('assets/images/dogFound.png')
+                                as ImageProvider,
+                      ),
+                    ),
                   ),
                   SizedBox(
                     width: 20,
                   ),
                   Flexible(
                     child: Text(
-                      event.title,
+                      widget.event.title,
                       style: TextStyle(
                         fontSize:
                             20, // Change this value to adjust the font size
@@ -237,15 +305,30 @@ class GoToEventTopPopUp extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: () {
-                onButtonPressed();
-              },
-              child: Text('Go To Event'),
-              style: TextButton.styleFrom(
-                iconColor: Colors.white,
-                backgroundColor: Colors.blue,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    widget.onButtonPressed();
+                  },
+                  child: Text('Go to location'),
+                  style: TextButton.styleFrom(
+                    iconColor: Colors.white,
+                    backgroundColor: Colors.blue,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    openChat();
+                  },
+                  child: Text('Contact'),
+                  style: TextButton.styleFrom(
+                    iconColor: Colors.white,
+                    backgroundColor: Colors.blue,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

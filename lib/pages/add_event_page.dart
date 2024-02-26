@@ -28,117 +28,144 @@ class _AddEventPageState extends State<AddEventPage> {
   DateTime _pickedDate = DateTime.now();
   TimeOfDay _pickedTime = TimeOfDay.now();
   GeoPoint _choosenLocation = const GeoPoint(0, 0);
-
+  bool? _isLost = true;
   @override
   Widget build(BuildContext context) {
     final UserProvider userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Add Event Page")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Title',
+      appBar: AppBar(title: Text("Add Dog Report")),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Description',
+              SizedBox(height: 20),
+              TextField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            Container(
-              child: Padding(
-                padding: EdgeInsets.all(30),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: "Pick a date",
-                    filled: true,
-                    prefixIcon: Icon(Icons.calendar_today),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.blue,
+              SizedBox(height: 20),
+              // DropdownButton<bool>(
+              //   value: _isLost,
+              //   hint: Text('Is Lost?'),
+              //   items: <DropdownMenuItem<bool>>[
+              //     DropdownMenuItem<bool>(
+              //       value: true,
+              //       child: Text('Is Lost'),
+              //     ),
+              //     DropdownMenuItem<bool>(
+              //       value: false,
+              //       child: Text('Is Found'),
+              //     ),
+              //   ],
+              //   onChanged: (bool? newValue) {
+              //     setState(() {
+              //       _isLost = newValue;
+              //     });
+              //   },
+              // ),
+              // SizedBox(height: 20),
+              Container(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: "Pick a date",
+                      filled: true,
+                      prefixIcon: Icon(Icons.calendar_today),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
+                    readOnly: true,
+                    onTap: () {
+                      _selectedDate();
+                    },
                   ),
-                  readOnly: true,
-                  onTap: () {
-                    _selectedDate();
-                  },
                 ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LocationPickerPage(
-                      setLocation: (LatLng location) {
-                        setState(() {
-                          _choosenLocation =
-                              GeoPoint(location.latitude, location.longitude);
-                        });
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LocationPickerPage(
+                        setLocation: (LatLng location) {
+                          setState(() {
+                            _choosenLocation =
+                                GeoPoint(location.latitude, location.longitude);
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Text(_choosenLocation.latitude != 0
+                    ? "Location Added"
+                    : "Add Location"),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _pickImageFromGallery();
                       },
+                      child: _pickedImage != null
+                          ? Text("Image Added")
+                          : Text("Add Image"),
                     ),
                   ),
-                );
-              },
-              child: Text(_choosenLocation.latitude != 0
-                  ? "Location Added"
-                  : "Add Location"),
-            ),
-            SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _pickImageFromGallery();
-                    },
-                    child: Text("Add Image"),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 25),
-            TextField(
-              decoration: const InputDecoration(
-                labelText: "Pick a time",
-                filled: true,
-                prefixIcon: Icon(Icons.access_time),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.blue,
-                  ),
-                ),
+                ],
               ),
-              readOnly: true,
-              onTap: () {
-                _selectTime();
-              },
-            ),
-            SizedBox(height: 25),
-            ElevatedButton(
-              onPressed: () {
-                addEvent(userProvider.user.username);
-              },
-              child: Text("Add Event"),
-            ),
-          ],
+              SizedBox(height: 25),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: _pickedTime != TimeOfDay.now()
+                      ? 'Time picked'
+                      : 'No time picked',
+                  filled: true,
+                  prefixIcon: Icon(Icons.access_time),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                readOnly: true,
+                onTap: () {
+                  _selectTime();
+                },
+              ),
+              SizedBox(height: 25),
+              ElevatedButton(
+                onPressed: () {
+                  addEvent(userProvider.user.username);
+                },
+                child: Text("Add Dog Report"),
+              ),
+              SizedBox(height: 85),
+            ],
+          ),
         ),
       ),
     );
@@ -156,6 +183,7 @@ class _AddEventPageState extends State<AddEventPage> {
     print('Title: ${_titleController.text}');
     print('Picked Date: $_pickedDate');
     print('Picked Date: $_pickedTime');
+    print(" is lost: $_isLost");
 
     try {
       // String res = await FireStoreMethods().uploadEvent(
@@ -171,6 +199,7 @@ class _AddEventPageState extends State<AddEventPage> {
       String res = await ApiMethods().uploadDogReport(
           _titleController.text,
           _descriptionController.text,
+          _isLost!,
           _pickedImage!,
           userId,
           _choosenLocation,

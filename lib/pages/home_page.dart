@@ -36,23 +36,25 @@ class _HomePageState extends State<HomePage> {
       onNotificationDisplayedMethod:
           NotificationApi.onNotificationDisplayedMethod,
     );
-    getReports();
     super.initState();
+    getReports();
 
     // getEvents();
   }
 
   Future<void> getReports() async {
     List<DogReport> fetchedDogReports = await ApiMethods().fetchDogReports();
-    setState(() {
-      dogReports = fetchedDogReports;
-    });
+    if (mounted) {
+      setState(() {
+        dogReports = fetchedDogReports;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Events')),
+      appBar: AppBar(title: Text('Dog Reports')),
       body: Container(
         child: CustomScrollView(
           primary: false,
@@ -66,6 +68,7 @@ class _HomePageState extends State<HomePage> {
                 children: <Widget>[
                   ...dogReports.map((report) {
                     return EventCard(
+                      removeDogReport: (id) {},
                       dogReport: report,
                     );
                   }).toList(),

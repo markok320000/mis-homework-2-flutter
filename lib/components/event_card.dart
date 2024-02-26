@@ -1,12 +1,8 @@
 import 'dart:typed_data';
-
 import 'package:event_scheduler_project/models/dogReportModel.dart';
-import 'package:event_scheduler_project/models/eventMode.dart';
 import 'package:event_scheduler_project/pages/event_page.dart';
 import 'package:event_scheduler_project/providers/user_provider.dart';
 import 'package:event_scheduler_project/resources/api/api_methods.dart';
-import 'package:event_scheduler_project/resources/firestore_methods.dart';
-import 'package:event_scheduler_project/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -17,10 +13,14 @@ String formatDate(DateTime date) {
 
 class EventCard extends StatefulWidget {
   final DogReport dogReport;
+  final Function(String)
+      removeDogReport; // Function that takes a String parameter
   bool? isInMyReports;
+
   EventCard({
     Key? key,
     required this.dogReport,
+    required this.removeDogReport, // Pass the function as a parameter
     bool? isInMyReports,
   })  : isInMyReports = isInMyReports ?? false,
         super(key: key);
@@ -60,7 +60,7 @@ class _EventCardState extends State<EventCard> {
       child: Stack(
         children: [
           Container(
-            height: 200,
+            height: 300,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               image: DecorationImage(
@@ -77,6 +77,7 @@ class _EventCardState extends State<EventCard> {
           TopWidgetPart(
             dogReport: widget.dogReport,
             isInMyReports: widget.isInMyReports,
+            removeDogReport: widget.removeDogReport, // Pass the function down
           ),
         ],
       ),
@@ -87,12 +88,15 @@ class _EventCardState extends State<EventCard> {
 class TopWidgetPart extends StatelessWidget {
   final DogReport dogReport;
   final bool? isInMyReports;
+  final Function(String)
+      removeDogReport; // Function that takes a String parameter
 
   const TopWidgetPart({
-    super.key,
-    this.isInMyReports,
+    Key? key,
     required this.dogReport,
-  });
+    required this.removeDogReport, // Pass the function as a parameter
+    this.isInMyReports,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +112,7 @@ class TopWidgetPart extends StatelessWidget {
           _ButtonPartContainer(
             isInMyReports: isInMyReports,
             dogReport: dogReport,
+            removeDogReport: removeDogReport, // Pass the function down
           ),
         ],
       ),
@@ -115,15 +120,31 @@ class TopWidgetPart extends StatelessWidget {
   }
 }
 
-class _ButtonPartContainer extends StatelessWidget {
+class _ButtonPartContainer extends StatefulWidget {
   final bool? isInMyReports;
   final DogReport dogReport;
+  final Function(String)
+      removeDogReport; // Function that takes a String parameter
 
   const _ButtonPartContainer({
-    super.key,
-    this.isInMyReports,
+    Key? key,
     required this.dogReport,
+    required this.removeDogReport, // Pass the function as a parameter
+    this.isInMyReports,
   });
+
+  @override
+  State<_ButtonPartContainer> createState() => _ButtonPartContainerState();
+}
+
+class _ButtonPartContainerState extends State<_ButtonPartContainer> {
+  late final UserProvider _userProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _userProvider = Provider.of<UserProvider>(context, listen: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,9 +152,13 @@ class _ButtonPartContainer extends StatelessWidget {
 
     return Align(
       alignment: Alignment.topRight,
-      child: isInMyReports!
+      child: widget.isInMyReports!
           ? ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                print("Remove Dog Report");
+                widget
+                    .removeDogReport(widget.dogReport.id); // Call the function
+              },
               child: Icon(Icons.remove),
               style: ElevatedButton.styleFrom(
                 shape: CircleBorder(),
@@ -141,23 +166,15 @@ class _ButtonPartContainer extends StatelessWidget {
                 backgroundColor: Colors.red,
               ),
             )
-          : Container(), // Empty Container (invisible) when isInMyReports is false
+          : Container(),
     );
-  }
-
-  void removeFromFavourites(String eventId, String userId, context) async {
-    String res = await FireStoreMethods().removeFromFavourites(eventId, userId);
-
-    if (res == "success") {
-      showSnackBar(context, "Removed From Favourites");
-    }
   }
 }
 
 class _DatePartContainer extends StatelessWidget {
   final DateTime eventDate;
   const _DatePartContainer({
-    super.key,
+    Key? key,
     required this.eventDate,
   });
 
@@ -194,7 +211,7 @@ class BottomWidgetPart extends StatelessWidget {
   final DogReport dogReport;
 
   const BottomWidgetPart({
-    super.key,
+    Key? key,
     required this.dogReport,
   });
 

@@ -1,3 +1,4 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
 class DogReport {
@@ -43,7 +44,8 @@ class DogReport {
   // Method to convert DogReport to JSON
   Map<String, dynamic> toJson() => {
         'id': id,
-        'isLost': isLost,
+        'isLost':
+            isLost ? "true" : "false", // Convert boolean to "true" or "false
         'userId': userId,
         'title': title,
         'description': description,
@@ -53,4 +55,8 @@ class DogReport {
         'latitude': latitude,
         'longitude': longitude,
       };
+
+  LatLng getLatLng() {
+    return LatLng(latitude, longitude);
+  }
 }

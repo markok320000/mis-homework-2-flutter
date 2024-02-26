@@ -1,8 +1,16 @@
+import 'dart:typed_data';
+
+import 'package:event_scheduler_project/models/chat.dart';
+import 'package:event_scheduler_project/models/dogReportModel.dart';
+import 'package:event_scheduler_project/pages/ChatPage.dart';
+import 'package:event_scheduler_project/providers/user_provider.dart';
+import 'package:event_scheduler_project/resources/api/api_methods.dart';
 import 'package:event_scheduler_project/resources/firestore_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:timezone/timezone.dart';
 
 import '../models/eventMode.dart';
@@ -17,15 +25,44 @@ class EventPage extends StatefulWidget {
 }
 
 class _EventPageState extends State<EventPage> {
-  LatLng _center = const LatLng(41.9961, 21.4314);
-  Event? _event;
-
+  LatLng? _center;
+  DogReport? _dogReport;
+  Uint8List? imageFile;
+  late UserProvider _userProvider;
   Future<void> fetchEvent(String id) async {
-    Event event = await FireStoreMethods().fetchEventById(id);
+    DogReport dogReport =
+        await ApiMethods().getDogReportById(widget.dogReportId);
 
     setState(() {
-      _event = event;
+      _dogReport = dogReport;
+      getImage();
     });
+  }
+
+  void getImage() async {
+    Uint8List image = await ApiMethods().fetchImage(_dogReport!.imgUrl);
+    setState(() {
+      imageFile = image;
+    });
+  }
+
+  void openChat() async {
+    ChatDTO openChat = await ApiMethods()
+        .createChat(_userProvider.user.username, _dogReport!.userId);
+
+    if (!_userProvider.user.chats.contains(openChat.id)) {
+      _userProvider.user.chats.add(openChat.id);
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatPage(
+          chat: openChat,
+          // Pass any other required parameters to ChatCard
+        ),
+      ),
+    );
   }
 
   Future<void> _getCurrentLocation() async {
@@ -43,116 +80,144 @@ class _EventPageState extends State<EventPage> {
     // TODO: implement initState
     _getCurrentLocation();
     fetchEvent(widget.dogReportId);
+    _userProvider = Provider.of<UserProvider>(context, listen: false);
+
     super.initState();
+  }
+
+  void isLoading() {
+    if (_dogReport == null || imageFile == null) {
+      CircularProgressIndicator();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Event Page")),
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  image: DecorationImage(
-                    image: NetworkImage(
-                      _event == null
-                          ? 'https://images.freeimages.com/variants/VZ8KRrC1agcXw91iuorUFbjj/f4a36f6589a0e50e702740b15352bc00e4bfaf6f58bd4db850e167794d05993d?fmt=webp&h=350'
-                          : _event!.photoUrl,
-                    ), // replace with your image url
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Column(
-                children: [
-                  Text(
-                    _event?.title ?? 'Loading...',
-                    style: TextStyle(
-                      fontSize: 24, // replace with yrour desired font size
-                      fontWeight: FontWeight
-                          .bold, // replace with your desired font weight
-                    ),
-                  ),
-                  Text(_event?.eventDate != null
-                      ? DateFormat('dd.MM.yyyy').format(_event!.eventDate)
-                      : "unknown"),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(_event?.eventTime != null
-                      ? _event!.eventTime.format(context)
-                      : "unknown"),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Flex(
-                    direction: Axis
-                        .horizontal, // or Axis.vertical depending on your needs
-                    children: [
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.all(10),
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Text(
-                              //   "Organized By: Miroslav Krstic",
-                              //   style: (TextStyle(
-                              //       fontSize: 20, fontWeight: FontWeight.w600)),
-                              // ),
-                              SizedBox(
-                                height: 20,
-                              ),
-                              Text(
-                                _event?.title ?? "Loading...",
-                                style: (TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w600)),
-                              ),
-                              SizedBox(
-                                height: 40,
-                                width: 40,
-                              ),
-                              Container(
-                                width: double.infinity,
-                                height: 300,
-                                child: GoogleMap(
-                                  initialCameraPosition: CameraPosition(
-                                    target: _center,
-                                    zoom: 11.0,
-                                  ),
-                                  markers: {
-                                    Marker(
-                                      markerId: MarkerId('Skopje'),
-                                      position: _event?.location != null
-                                          ? LatLng(_event!.location.latitude,
-                                              _event!.location.longitude)
-                                          : LatLng(0, 0),
-                                    )
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                height: 40,
-                                width: 40,
-                              ),
-                            ],
-                          ),
+        appBar: AppBar(title: Text("")),
+        body: _dogReport == null || imageFile == null
+            ? Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                      height: 300,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                        image: DecorationImage(
+                          fit: BoxFit.cover,
+                          image: imageFile != null
+                              ? MemoryImage(imageFile!)
+                              : AssetImage('assets/images/dogFound.png')
+                                  as ImageProvider,
                         ),
                       ),
-                    ],
-                  )
-                ],
-              )
-            ],
-          ),
-        ));
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          _dogReport?.title ?? 'Loading...',
+                          style: TextStyle(
+                            fontSize:
+                                24, // replace with yrour desired font size
+                            fontWeight: FontWeight
+                                .bold, // replace with your desired font weight
+                          ),
+                        ),
+                        Text(_dogReport?.dateTime != null
+                            ? DateFormat('dd.MM.yyyy')
+                                .format(_dogReport!.dateTime)
+                            : "unknown"),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(_dogReport?.dateTime != null
+                            ? _dogReport!.dateTime.hour.toString() +
+                                ":" +
+                                _dogReport!.dateTime.minute.toString()
+                            : "unknown"),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Flex(
+                          direction: Axis
+                              .horizontal, // or Axis.vertical depending on your needs
+                          children: [
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.all(10),
+                                width: double.infinity,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Text(
+                                      _dogReport?.title ?? "Loading...",
+                                      style: (TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600)),
+                                    ),
+                                    SizedBox(
+                                      height: 40,
+                                      width: 40,
+                                    ),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 300,
+                                      child: _dogReport?.latitude == null
+                                          ? Center(
+                                              child:
+                                                  CircularProgressIndicator())
+                                          : GoogleMap(
+                                              initialCameraPosition:
+                                                  CameraPosition(
+                                                target: LatLng(
+                                                    _dogReport!.latitude,
+                                                    _dogReport!.longitude),
+                                                zoom: 11.0,
+                                              ),
+                                              markers: {
+                                                Marker(
+                                                  markerId: MarkerId('Skopje'),
+                                                  position: LatLng(
+                                                      _dogReport!.latitude,
+                                                      _dogReport!.longitude),
+                                                ),
+                                              },
+                                            ),
+                                    ),
+                                    SizedBox(
+                                      height: 40,
+                                      width: 40,
+                                    ),
+                                    _userProvider.user.username !=
+                                            _dogReport!.userId
+                                        ? TextButton(
+                                            onPressed: () {
+                                              openChat();
+                                            },
+                                            child: Text('Contact'),
+                                            style: TextButton.styleFrom(
+                                              iconColor: Colors.white,
+                                              backgroundColor: Colors.blue,
+                                            ),
+                                          )
+                                        : Container(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ));
   }
 }

@@ -24,9 +24,22 @@ class ApiMethods {
     }
   }
 
+  Future<DogReport> getDogReportById(String id) async {
+    Dio dio = Dio();
+    final response =
+        await dio.get('http://192.168.0.11:8080/api/dog-reports/$id');
+
+    if (response.statusCode == 200) {
+      return DogReport.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load dog report with id $id');
+    }
+  }
+
   Future<String> uploadDogReport(
       String title,
       String description,
+      bool isLost,
       Uint8List file,
       String username,
       GeoPoint location,
@@ -44,8 +57,8 @@ class ApiMethods {
 
     DogReport dogReport = DogReport(
         id: dogReportid,
-        isLost: true,
-        userId: "jhon",
+        isLost: isLost,
+        userId: username,
         title: title,
         description: description,
         imgUrl: imgUrl,
@@ -55,6 +68,7 @@ class ApiMethods {
 
     Dio dio = Dio();
     try {
+      print(dogReport.toJson());
       final response = await dio.post(
         'http://192.168.0.11:8080/api/dog-reports/create',
         data: dogReport.toJson(),
@@ -111,13 +125,16 @@ class ApiMethods {
     }
   }
 
-  Future<DogReport> getMyDogReports(String userId) async {
+  Future<List<DogReport>> getMyDogReports(String username) async {
     Dio dio = Dio();
     final response = await dio
-        .get('http://192.168.0.11:8080/api/dog-reports/myReports/$userId');
+        .get('http://192.168.0.11:8080/api/dog-reports/myReports/$username');
 
     if (response.statusCode == 200) {
-      return DogReport.fromJson(response.data);
+      List<dynamic> jsonList = response.data;
+      List<DogReport> dogReports =
+          jsonList.map((json) => DogReport.fromJson(json)).toList();
+      return dogReports;
     } else {
       throw Exception('Failed to load dog reports');
     }
@@ -132,6 +149,45 @@ class ApiMethods {
       return ChatDTO.fromJson(response.data);
     } else {
       throw Exception('Failed to load chat');
+    }
+  }
+
+  Future<ChatDTO> createChat(
+      String firstParticipantId, String secondParticipantId) async {
+    print("firstParticipantId: $firstParticipantId");
+    print("secondParticipantId: $secondParticipantId");
+    Dio dio = Dio();
+    final response = await dio.get(
+        "http://192.168.0.11:8080/api/chat/create/$firstParticipantId/$secondParticipantId");
+
+    if (response.statusCode == 200) {
+      ChatDTO chatDTO = ChatDTO.fromJson(response.data);
+      return chatDTO;
+    } else {
+      throw Exception('Failed to create chat');
+    }
+  }
+
+  Future<bool> deleteMyDogReport(String id) async {
+    try {
+      Dio dio = Dio();
+      final response = await dio.delete(
+        'http://192.168.0.11:8080/api/dog-reports/delete/$id',
+      );
+
+      // Check the response status code to handle success or failure
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        // Handle other status codes as needed
+        print(
+            'Failed to delete dog report. Status code: ${response.statusCode}');
+        return false;
+      }
+    } catch (error) {
+      // Handle any errors that occurred during the request
+      print('Error deleting dog report: $error');
+      return false;
     }
   }
 }

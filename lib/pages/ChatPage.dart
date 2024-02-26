@@ -75,7 +75,9 @@ class _ChatPageState extends State<ChatPage> {
             SizedBox(
               width: 10,
             ),
-            Text("Danny hopkins"),
+            Text(widget.chat.firstParticipantId == _userProvider.user.username
+                ? widget.chat.secondParticipantId
+                : widget.chat.firstParticipantId),
           ],
         ),
       ),

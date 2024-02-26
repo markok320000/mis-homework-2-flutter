@@ -1,5 +1,7 @@
 import 'package:event_scheduler_project/components/chat_card.dart';
+import 'package:event_scheduler_project/main.dart';
 import 'package:event_scheduler_project/models/chat.dart';
+import 'package:event_scheduler_project/pages/main_page.dart';
 import 'package:event_scheduler_project/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,7 +32,25 @@ class _MessagesPageState extends State<MessagesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Messages")),
+      appBar: AppBar(
+        title: Text("Messages"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              _userProvider.logout();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyApp(),
+                ),
+                (route) =>
+                    false, // This makes sure all previous routes are removed
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(

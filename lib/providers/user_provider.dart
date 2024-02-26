@@ -14,4 +14,9 @@ class UserProvider with ChangeNotifier {
     _isLogged = true;
     notifyListeners(); // Notify listeners about the change
   }
+
+  void logout() {
+    _isLogged = false;
+    notifyListeners(); // Notify listeners about the change
+  }
 }
